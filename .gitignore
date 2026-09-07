@@ -1,0 +1,46 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyInstaller / Build artifacts
+build/
+dist/
+dist_installer/
+*.manifest
+*.spec.bak
+
+# Pytest & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Temporary runtime storage & webview caches
+data/webview_storage/
+data/EBWebView/
+data/*.log
+*.log
+
+# User uploaded files & exported results (keep directory structure)
+uploads/*
+!uploads/.gitkeep
+exported_docs/*
+!exported_docs/.gitkeep
+
+# Sensitive test credentials
+测试API KEY.txt
+*.key
+*.pem
+
+# Editor & IDE configs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS temporary files
+Thumbs.db
+Desktop.ini
+~$*.xlsx
+~$*.docx
+~$*.doc

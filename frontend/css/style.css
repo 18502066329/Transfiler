@@ -1,0 +1,291 @@
+/* ==========================================================================
+   TransFiler - Industrial Precision & Taste Skill Design System
+   Dual-Theme Engine: Pro Dark & Studio Light (Anti-Slop Architecture)
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* --- 1. 双主题色彩与微材质系统 (Dual-Theme Tokens) --- */
+:root, [data-theme="dark"] {
+  --bg-app: #080b11;
+  --bg-sidebar: #0b1019;
+  --bg-header: rgba(11, 16, 25, 0.88);
+  --bg-surface: #0e1524;
+  --bg-card: #111a2c;
+  --bg-card-hover: #162238;
+  --bg-card-subtle: #0a0f19;
+  --bg-input: #080d16;
+  --bg-input-focus: #0e1524;
+  
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-medium: rgba(255, 255, 255, 0.13);
+  --border-strong: rgba(255, 255, 255, 0.22);
+  --border-focus: #3b82f6;
+  
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-dim: #475569;
+  
+  /* 统一工业级主强调色 (Pro Cobalt Blue) */
+  --accent-primary: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-active: #1d4ed8;
+  --accent-text: #ffffff;
+  --accent-subtle: rgba(59, 130, 246, 0.12);
+  --accent-glow: rgba(59, 130, 246, 0.25);
+  
+  /* 徽章与状态色 */
+  --badge-bg: rgba(255, 255, 255, 0.05);
+  --badge-text: #94a3b8;
+  --badge-border: rgba(255, 255, 255, 0.08);
+  
+  --badge-highlight-bg: rgba(59, 130, 246, 0.14);
+  --badge-highlight-text: #60a5fa;
+  --badge-highlight-border: rgba(59, 130, 246, 0.28);
+
+  --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --btn-shadow: 0 2px 10px rgba(59, 130, 246, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* 浅色模式 (Studio Light) */
+[data-theme="light"] {
+  --bg-app: #f8fafc;
+  --bg-sidebar: #ffffff;
+  --bg-header: rgba(255, 255, 255, 0.9);
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --bg-card-subtle: #f1f5f9;
+  --bg-input: #f8fafc;
+  --bg-input-focus: #ffffff;
+  
+  --border-subtle: #e2e8f0;
+  --border-medium: #cbd5e1;
+  --border-strong: #94a3b8;
+  --border-focus: #2563eb;
+  
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+  
+  /* 统一主强调色 */
+  --accent-primary: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-active: #1e40af;
+  --accent-text: #ffffff;
+  --accent-subtle: rgba(37, 99, 235, 0.08);
+  --accent-glow: rgba(37, 99, 235, 0.18);
+  
+  /* 徽章与状态色 */
+  --badge-bg: #f1f5f9;
+  --badge-text: #475569;
+  --badge-border: #e2e8f0;
+  
+  --badge-highlight-bg: #eff6ff;
+  --badge-highlight-text: #2563eb;
+  --badge-highlight-border: #bfdbfe;
+
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 14px -2px rgba(0, 0, 0, 0.03);
+  --btn-shadow: 0 2px 8px rgba(37, 99, 235, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* --- 2. 统一排版规范 (Typography System) --- */
+body {
+  font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: -0.015em;
+  transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-mono {
+  font-family: "JetBrains Mono", Consolas, Monaco, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 标题统一 */
+h1, h2, h3, h4 {
+  color: var(--text-primary);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+/* --- 3. 导航与侧边栏 (Sidebar & Navigation) --- */
+.nav-item {
+  position: relative;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  color: var(--text-secondary);
+}
+.nav-item:hover {
+  background-color: var(--border-subtle);
+  color: var(--text-primary);
+}
+.nav-item-active {
+  background: var(--accent-subtle);
+  color: var(--accent-primary);
+  font-weight: 600;
+}
+.nav-item-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background-color: var(--accent-primary);
+}
+
+/* --- 4. 容器与卡片规范 (Card Architecture) --- */
+.app-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dropzone-box {
+  background-color: var(--bg-card);
+  border: 1.5px dashed var(--border-medium);
+  border-radius: 14px;
+  box-shadow: var(--card-shadow);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+.dropzone-box:hover, .dropzone-hover {
+  border-color: var(--accent-primary) !important;
+  background-color: var(--bg-card-hover) !important;
+  box-shadow: 0 0 24px var(--accent-glow);
+}
+
+/* 排版模式卡片 (Layout Rule Radio Cards) */
+.layout-rule-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-card-subtle);
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.layout-rule-card:hover {
+  border-color: var(--border-medium);
+  background-color: var(--bg-card-hover);
+}
+.layout-rule-card:has(input:checked) {
+  border-color: var(--border-focus);
+  background-color: var(--accent-subtle);
+}
+
+/* --- 5. 按钮与输入控件规范 --- */
+.btn-primary {
+  background-color: var(--accent-primary);
+  color: var(--accent-text);
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: var(--btn-shadow);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary:hover {
+  background-color: var(--accent-hover);
+  transform: translateY(-0.5px);
+}
+.btn-primary:active {
+  background-color: var(--accent-active);
+  transform: translateY(1px) scale(0.985);
+}
+
+.btn-secondary {
+  background-color: var(--bg-card-subtle);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-secondary:hover {
+  border-color: var(--border-medium);
+  background-color: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+.btn-secondary:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+.app-input {
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  border-radius: 8px;
+  font-size: 12px;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.app-input:hover {
+  border-color: var(--border-medium);
+}
+.app-input:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  background-color: var(--bg-input-focus);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+/* 统一徽章 Badge 样式 */
+.app-badge {
+  font-size: 10.5px;
+  font-weight: 500;
+  padding: 2.5px 8.5px;
+  border-radius: 6px;
+  background-color: var(--badge-bg);
+  color: var(--badge-text);
+  border: 1px solid var(--badge-border);
+  display: inline-flex;
+  align-items: center;
+  gap: 4.5px;
+  letter-spacing: -0.01em;
+}
+
+.app-badge-highlight {
+  background-color: var(--badge-highlight-bg);
+  color: var(--badge-highlight-text);
+  border-color: var(--badge-highlight-border);
+  font-weight: 600;
+}
+
+/* 滚动条 */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-medium);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* 动画系统 */
+.fade-in {
+  animation: fadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

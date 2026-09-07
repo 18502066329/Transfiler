@@ -1,0 +1,120 @@
+import os
+import pytest
+from pathlib import Path
+from fastapi.testclient import TestClient
+from backend.app import app
+
+client = TestClient(app)
+
+def test_settings_api():
+    res = client.get("/api/settings")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "success"
+    assert "provider" in data["data"]
+
+    # 保存设置测试
+    save_res = client.post("/api/settings", json={
+        "provider": "deepseek",
+        "api_key": "sk-testkey123456",
+        "base_url": "https://api.deepseek.com/v1",
+        "model_name": "deepseek-chat"
+    })
+    assert save_res.status_code == 200
+    assert save_res.json()["status"] == "success"
+
+    # 开机自动检测接口测试
+    chk_res = client.get("/api/settings/check-connection")
+    assert chk_res.status_code == 200
+    chk_data = chk_res.json()
+    assert "success" in chk_data
+
+def test_glossary_api():
+    # 获取术语列表
+    res = client.get("/api/glossary")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "success"
+    assert isinstance(data["data"], list)
+
+    # 创建新词条
+    add_res = client.post("/api/glossary", json={
+        "source_term": "临时测试治具",
+        "target_term": "Temporary Test Jig",
+        "target_lang": "en",
+        "category": "工装"
+    })
+    assert add_res.status_code == 200
+    new_id = add_res.json()["id"]
+
+    # 删除新词条
+    del_res = client.delete(f"/api/glossary/{new_id}")
+    assert del_res.status_code == 200
+
+def test_task_workflow_end_to_end():
+    sample_file = Path("sample_docs/SOP_注塑机标准作业指导书.docx")
+    assert sample_file.exists()
+
+    # 1. 上传文件
+    with open(sample_file, "rb") as f:
+        upload_res = client.post("/api/task/upload", files={"file": ("SOP_注塑机标准作业指导书.docx", f, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")})
+    
+    assert upload_res.status_code == 200
+    task_data = upload_res.json()
+    task_id = task_data["task_id"]
+    assert task_data["total_items"] > 0
+
+    # 2. 执行处理 (测试中译英，中文在下 zh_bottom 排版)
+    process_res = client.post("/api/task/process", json={
+        "task_id": task_id,
+        "source_lang": "zh",
+        "target_lang": "en",
+        "layout_mode": "zh_bottom",
+        "use_glossary": True
+    })
+    assert process_res.status_code == 200
+    proc_data = process_res.json()
+    assert len(proc_data["items"]) > 0
+    assert proc_data["layout_mode"] == "zh_bottom"
+
+    # 3. 手动修改某个条目 (校对)
+    first_item_id = proc_data["items"][0]["id"]
+    update_res = client.post("/api/task/update-item", json={
+        "task_id": task_id,
+        "item_id": first_item_id,
+        "target_text": "MANUAL_PROOFREAD_CORRECTION_TITLE"
+    })
+    assert update_res.status_code == 200
+
+    # 4. 导出文件
+    export_res = client.post("/api/task/export", json={
+        "task_id": task_id,
+        "layout_mode": "zh_bottom"
+    })
+    assert export_res.status_code == 200
+    export_data = export_res.json()
+    assert export_data["status"] == "success"
+    assert os.path.exists(export_data["export_path"])
+
+def test_foreign_to_chinese_workflow():
+    sample_file = Path("sample_docs/工艺参数表_模具点检.xlsx")
+    assert sample_file.exists()
+
+    # 上传 Excel
+    with open(sample_file, "rb") as f:
+        upload_res = client.post("/api/task/upload", files={"file": ("工艺参数表_模具点检.xlsx", f, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")})
+    assert upload_res.status_code == 200
+    task_id = upload_res.json()["task_id"]
+
+    # 测试外语 -> 中文 (如 en -> zh) 处理
+    proc_res = client.post("/api/task/process", json={
+        "task_id": task_id,
+        "source_lang": "en",
+        "target_lang": "zh",
+        "layout_mode": "zh_top",
+        "use_glossary": True
+    })
+    assert proc_res.status_code == 200
+    proc_data = proc_res.json()
+    assert proc_data["source_lang"] == "en"
+    assert proc_data["target_lang"] == "zh"
