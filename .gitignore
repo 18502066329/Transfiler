@@ -9,6 +9,8 @@ dist/
 dist_installer/
 *.manifest
 *.spec.bak
+*.zip
+*.tar.gz
 
 # Pytest & Coverage
 .pytest_cache/
