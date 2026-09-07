@@ -21,6 +21,12 @@ data/EBWebView/
 data/*.log
 *.log
 
+# Runtime SQLite databases (protects local credentials and history)
+data/*.db
+data/*.db-journal
+*.db
+!data/.gitkeep
+
 # User uploaded files & exported results (keep directory structure)
 uploads/*
 !uploads/.gitkeep
