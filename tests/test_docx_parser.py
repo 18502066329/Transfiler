@@ -54,3 +54,33 @@ def test_docx_extract_and_rebuild(tmp_path):
     first_p = doc_bottom.paragraphs[0].text
     # 中文在下：译文在第一行，原中文在第二行
     assert "Translated:" in first_p
+
+def test_docx_complex_table_extraction_and_rebuild(tmp_path):
+    sample_path = Path("sample_docs/职位说明书（体系专员）.docx")
+    if not sample_path.exists():
+        pytest.skip(f"Sample file {sample_path} not found")
+
+    # 1. 提取内容：验证复杂表格与多段落无损全量提取（原先因 GC 碰撞仅提取 43 条，现应达到 162 条）
+    items = DocxParserEngine.extract_content(str(sample_path))
+    assert len(items) >= 160, f"Expected at least 160 items extracted, got {len(items)}"
+
+    # 2. 模拟翻译结果字典
+    items_map = {it["id"]: f"EN: {it['source_text']}" for it in items}
+
+    # 3. 测试双语重构
+    output_docx = tmp_path / "test_bilingual_zhiwei.docx"
+    DocxParserEngine.rebuild_bilingual_doc(
+        original_file_path=str(sample_path),
+        output_file_path=str(output_docx),
+        items_map=items_map,
+        layout_mode="zh_top",
+        source_lang="zh",
+        target_lang="en"
+    )
+    assert output_docx.exists()
+
+    # 4. 验证重构后文档结构完整
+    doc = docx.Document(str(output_docx))
+    assert len(doc.tables) == 1
+    assert len(doc.tables[0].rows) == 60
+

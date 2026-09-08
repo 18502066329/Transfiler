@@ -92,10 +92,10 @@ function swapLanguages() {
 
 // 处理选中的文件并上传解析
 async function handleFileSelect(file) {
-  const validExts = ['.docx', '.xlsx', '.csv', '.doc'];
+  const validExts = ['.docx', '.xlsx', '.csv', '.doc', '.pptx', '.ppt'];
   const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
   if (!validExts.includes(ext)) {
-    showToast('仅支持 .docx / .xlsx / .csv / .doc 格式文件', 'error');
+    showToast('仅支持 .docx / .xlsx / .csv / .doc / .pptx / .ppt 格式文件', 'error');
     return;
   }
 

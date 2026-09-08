@@ -1,7 +1,6 @@
 import os
 import csv
 from typing import List, Dict, Any
-from backend.core.parser_xlsx import is_person_name_text
 
 class CsvParserEngine:
     """CSV 表格高保真解析与重构引擎"""
@@ -30,7 +29,6 @@ class CsvParserEngine:
                 for c_idx, cell_text in enumerate(row):
                     text = cell_text.strip()
                     if text and not text.replace('.', '', 1).isdigit():
-                        is_name, name_val = is_person_name_text(text)
                         item_id = f"csv_r_{r_idx}_c_{c_idx}"
                         items.append({
                             "id": item_id,
@@ -38,8 +36,7 @@ class CsvParserEngine:
                             "row": r_idx,
                             "col": c_idx,
                             "source_text": text,
-                            "target_text": text if is_name and text == name_val else "",
-                            "is_person_name": is_name,
+                            "target_text": "",
                             "matched_terms": []
                         })
         return items

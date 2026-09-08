@@ -118,3 +118,94 @@ def test_foreign_to_chinese_workflow():
     proc_data = proc_res.json()
     assert proc_data["source_lang"] == "en"
     assert proc_data["target_lang"] == "zh"
+
+def test_pptx_api_workflow():
+    sample_file = Path("sample_docs/注塑车间生产工艺与安全培训课件.pptx")
+    assert sample_file.exists()
+
+    # 上传 PPTX
+    with open(sample_file, "rb") as f:
+        upload_res = client.post(
+            "/api/task/upload",
+            files={"file": ("注塑车间生产工艺与安全培训课件.pptx", f, "application/vnd.openxmlformats-officedocument.presentationml.presentation")}
+        )
+    assert upload_res.status_code == 200
+    up_data = upload_res.json()
+    assert up_data["file_type"] == "pptx"
+    task_id = up_data["task_id"]
+    assert up_data["total_items"] > 0
+
+    # 翻译任务处理
+    proc_res = client.post("/api/task/process", json={
+        "task_id": task_id,
+        "source_lang": "zh",
+        "target_lang": "en",
+        "layout_mode": "zh_top",
+        "use_glossary": True
+    })
+    assert proc_res.status_code == 200
+
+    # 导出 PPTX
+    export_res = client.post("/api/task/export", json={
+        "task_id": task_id,
+        "layout_mode": "zh_top"
+    })
+    assert export_res.status_code == 200
+    exp_data = export_res.json()
+    assert exp_data["status"] == "success"
+    assert os.path.exists(exp_data["export_path"])
+
+def test_gemini_settings_api():
+    # 测试保存 Gemini 配置
+    save_res = client.post("/api/settings", json={
+        "provider": "gemini",
+        "api_key": "AIzaSyFakeTestKeyForGemini123456",
+        "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
+        "model_name": "gemini-3.8-flash"
+    })
+    assert save_res.status_code == 200
+    assert save_res.json()["status"] == "success"
+
+    # 读取验证
+    get_res = client.get("/api/settings")
+    assert get_res.status_code == 200
+    st = get_res.json()["data"]
+    assert st["provider"] == "gemini"
+    assert st["model_name"] == "gemini-3.8-flash"
+
+def test_complex_job_description_docx_workflow():
+    sample_file = Path("sample_docs/职位说明书（体系专员）.docx")
+    assert sample_file.exists()
+
+    with open(sample_file, "rb") as f:
+        upload_res = client.post(
+            "/api/task/upload",
+            files={"file": ("职位说明书（体系专员）.docx", f, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")}
+        )
+    assert upload_res.status_code == 200
+    up_data = upload_res.json()
+    assert up_data["file_type"] == "docx"
+    assert up_data["total_items"] >= 160, f"Expected >= 160 items, got {up_data['total_items']}"
+    task_id = up_data["task_id"]
+
+    # 翻译任务处理
+    proc_res = client.post("/api/task/process", json={
+        "task_id": task_id,
+        "source_lang": "zh",
+        "target_lang": "en",
+        "layout_mode": "zh_top",
+        "use_glossary": True
+    })
+    assert proc_res.status_code == 200
+    assert len(proc_res.json()["items"]) >= 160
+
+    # 导出并验证
+    export_res = client.post("/api/task/export", json={
+        "task_id": task_id,
+        "layout_mode": "zh_top"
+    })
+    assert export_res.status_code == 200
+    exp_data = export_res.json()
+    assert exp_data["status"] == "success"
+    assert os.path.exists(exp_data["export_path"])
+

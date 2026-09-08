@@ -2,15 +2,15 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-v1.1.2-blue.svg?style=flat-square)
+![Version](https://img.shields.io/badge/version-v1.2.1-blue.svg?style=flat-square)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-green.svg?style=flat-square)
 ![Framework](https://img.shields.io/badge/Framework-FastAPI%20%7C%20PyWebView-orange.svg?style=flat-square)
-![Engine](https://img.shields.io/badge/Engine-OpenXML%20Lossless-blueviolet.svg?style=flat-square)
+![Engine](https://img.shields.io/badge/Engine-OpenXML%20%7C%20PPTX%20Lossless-blueviolet.svg?style=flat-square)
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011-0078D6.svg?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey.svg?style=flat-square)
 
 <p align="center">
-  <b>专为工业 SOP、工艺指引、排拉图、设备参数表打造的专业级多语种高保真双语制作平台</b>
+  <b>专为工业 SOP、工艺指引、技术培训 PPT、排拉图、设备参数表打造的专业级多语种高保真双语制作平台</b>
 </p>
 
 [功能特性](#-核心特性与创新) • [快速体验](#-快速启动与使用) • [大模型配置](#-大模型与-api-接入) • [系统架构](#-系统架构) • [安装包与分发](#-打包与安装包分发) • [更新日志](更新日志.md)
@@ -26,22 +26,26 @@
 传统翻译软件在处理制造业文档时存在严重缺陷：
 1. **排版失真与图片变形**：传统转换工具会破坏 Excel/Word 的原有合并单元格、边框颜色，尤其是在含有机台操作示意图、工装照片时，容易出现**图片大小被拉伸挤压、位置错位**；
 2. **绘图文本框内容丢失**：工程图纸与排拉图中的作业要求往往嵌在 Drawing 文本框（`<xdr:sp>` / `<xdr:txBody>`）中，普通翻译软件无法识别，导致**核心关键工序指导文字全盘丢失**；
-3. **专业术语误译与中文人名乱译**：通用模型常将机台零件、工艺参数或人员签署栏（如“编制：罗成耿”）音译为英文拼音或字典直译单词，容易导致车间误操作甚至品质事故。
+3. **专业术语误译与多段落表格丢失**：通用翻译工具常将机台零件、工艺参数字典直译，甚至在解析复杂 Word/Excel 表格时由于 GC 地址碰撞或嵌套段落导致大量文本丢失。
 
-**TransFiler** 专为解决上述工业级难题而生，提供 **OpenXML 级 0% 失真无损重构、绘图文本框全量提取、智能人名保护与专有术语双向索引**的完整解决方案。
+**TransFiler** 专为解决上述工业级难题而生，提供 **OpenXML 级 0% 失真无损重构、绘图文本框全量提取、复杂表格多段落高保真对齐与专有术语双向索引**的完整解决方案。
 
 ---
 
 ## ✨ 核心特性与创新
 
-### 1. 📐 OpenXML 级原生无损重构引擎 (复杂 Excel 0% 失真)
+### 1. 📐 OpenXML 级原生无损重构引擎 (复杂 Excel / Word 0% 失真)
 * **图片尺寸与位置 100% 保持**：采用底层 OpenXML 原生流式重构，直接操作字符串表与图元，**绝不改变图片原始尺寸与锚点坐标（`twoCellAnchor` / `oneCellAnchor`）**，杜绝照片变形；
 * **绘图层文本框深度提取**：深度解析并提取 Excel `xl/drawings/drawing*.xml` 中的形状与文本框说明，将图纸内的关键工艺步骤一并纳入双语翻译，同时完整回填；
-* **高保真 Word 重构**：XML 级解析独立段落与表格，100% 继承字号、颜色、对齐、表格底纹与合并单元格结构。
+* **高保真 Word 复杂表格与多段落重构**：
+  * **底层节点稳定比对（0% 漏译）**：彻底解决 Python 临时代理对象因内存地址回收复用（GC Collision）导致的单元格大面积误判丢弃问题（如包含 60 行、180+ 单元格的复杂岗位说明书提取率由不足 25% 提升至 100% 全量提取）；
+  * **单元格多段落紧贴双语对齐**：针对任职资格、岗位职责等单元格内包含十几条独立条款的场景，支持段落级独立提取与逐条紧贴追加双语 Run，保证中文与译文逐条紧密对应，杜绝译文堆叠至单元格末尾的失真排版；
+  * **全样式无损继承**：100% 继承字号、颜色、对齐、表格底纹与合并单元格结构。
 
-### 2. 👤 智能中文人名识别与免翻译保护
-* **形态学与签署前缀识别**：内置制造业签署词法分析器，自动识别“制订/审核/批准/签名/核准/检验员”等前缀及独立中文姓名；
-* **人名原样锁定**：识别为人名的条目自动保留原中文姓名，不交由大模型音译或意译，既保证签署的严谨性，又节省翻译 Token。
+### 2. 📽️ PowerPoint (PPT / PPTX) 高保真翻译与排版核验引擎
+* **全要素深度解析**：全面支持 `.pptx` 与 `.ppt`（自动调用 COM 转换），无损提取幻灯片文本框、AutoShape 形状文字、复杂表格单元格、组合图形 (GroupShape) 与演讲者备注页；
+* **智能自适应字号缩放 (Auto-fit)**：针对双语注入后文本行数翻倍可能导致文字溢出形状或幻灯片边界的问题，采用动态字号智能适配（按比例下调 15%~25% 并锁定 9pt~10pt 安全保底字号），开启自动换行与边距紧缩，杜绝排版失真；
+* **自动化效果核验 (`verify_pptx_quality`)**：导出后执行严格的 OpenXML 结构完整性校验，确认幻灯片与图元 100% 渲染完整无损坏。
 
 ### 3. 🌐 全双向 11 种语种互译与排版规则定制
 * **双向自由互选**：支持中文与 **英语、越南语、泰语、印尼语、日语、韩语、西班牙语、德语、法语、俄语** 等 11 种语言任意互译（中译外 & 外译中）；
@@ -89,10 +93,10 @@
 无需安装 Python 或任何依赖环境，开箱即用：
 
 1. **图形化安装版**：
-   - 运行 [`TransFiler_v1.1.2_Setup.exe`]的安装向导；
+   - 运行 [`TransFiler_v1.2.1_Setup.exe`] 的安装向导；
    - 支持自定义安装路径、创建桌面快捷方式、创建开始菜单目录并自动注册至 Windows 控制面板。
 2. **绿色免安装版**：
-   - 双击运行 [`TransFiler.exe`] 即可秒级启动原生桌面控制台。
+   - 双击运行 [`dist/TransFiler.exe`] 即可秒级启动原生桌面控制台。
 
 ---
 
@@ -102,7 +106,8 @@ TransFiler 采用标准 OpenAI 兼容协议，支持市面上几乎所有的主�
 
 | 服务商 | 默认 Base URL | 推荐模型 | 说明 |
 | :--- | :--- | :--- | :--- |
-| **DeepSeek (官方)** | `https://api.deepseek.com/v1` | `deepseek-chat` | **官方推荐**，制造业上下文理解极高，性价比出众 |
+| **Google Gemini (官方)** | `https://generativelanguage.googleapis.com/v1beta/openai` | `gemini-3.8-flash` | **官方推荐**，响应速度极快、高并发吞吐与长文本工程理解，支持 AI Studio Key (`AIzaSy...`) |
+| **DeepSeek (官方)** | `https://api.deepseek.com/v1` | `deepseek-chat` | **深度推荐**，制造业上下文理解极高，性价比出众 |
 | **硅基流动 (SiliconFlow)** | `https://api.siliconflow.cn/v1` | `deepseek-ai/DeepSeek-V3` | 国内高并发稳定接入节点 |
 | **阿里云百炼 (DashScope)** | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `deepseek-v3` / `qwen-plus` | 阿里云企业级云服务接入 |
 | **智谱清言 (Zhipu)** | `https://open.bigmodel.cn/api/paas/v4` | `glm-4-flash` | 提供高可用轻量级推理 |
@@ -111,6 +116,8 @@ TransFiler 采用标准 OpenAI 兼容协议，支持市面上几乎所有的主�
 | **自定义 / OneAPI** | 自定义网关地址 | 自定义模型名称 | 支持工厂内网代理网关或自建服务 |
 
 > **💡 API 容错机制**：系统内置智能清洗管道，自动过滤复制 API Key 时夹带的空格、首尾引号、零宽字符（`\u200b` 等）及多余的 `Bearer ` 前缀；Base URL 自动补齐协议头并去除多余 `/chat/completions` 后缀。
+> 
+> **💡 Gemini 网络连接提示**：连接 Google Gemini 官方端点时，需确保当前网络环境可正常访问 Google API 域名；若网络受限或出现 503 临时不可用 / 403 地区限制错误，建议检查本地科学上网代理或使用反向代理/中转端点。
 
 ---
 
@@ -134,9 +141,10 @@ TransFiler 采用标准 OpenAI 兼容协议，支持市面上几乎所有的主�
 |                           3. 核心算法与处理内核 (Core Engines)                     |
 |   - OpenXML 无损 Excel 引擎: 提取单元格与 DrawingML 文本框，100% 保护图片与版式     |
 |   - python-docx 引擎: Word 段落与表格样式 100% 继承，多语种双向排版重构            |
-|   - 智能人名保护算法: 自动识别编制/审核/批准签署姓名，原样锁定免翻译                |
+|   - python-pptx 引擎: PPT 幻灯片、表格、组合图深度提取与自适应字号排版核验          |
+|   - 复杂表格与多段落高保真引擎: XML 级底层比对 + 单元格多段落紧贴双语重构          |
 |   - 制造业术语引擎: Trie 树最长词优先匹配 + 工业级 Prompt 提示词注入约束            |
-|   - 翻译流水线: 异步并发分批请求 + JSON 结构稳健容错提取                           |
+|   - 翻译流水线: 异步并发分批请求 + JSON 结构稳健容错提取 (支持 Gemini / DeepSeek)  |
 +-----------------------------------------+-----------------------------------------+
                                           |
 +-----------------------------------------v-----------------------------------------+
@@ -160,23 +168,24 @@ TransFiler 采用标准 OpenAI 兼容协议，支持市面上几乎所有的主�
 该批处理将依次自动执行：
 1. 编译生成主程序免安装版：`dist\TransFiler.exe`
 2. 编译生成独立卸载程序：`dist\uninstall.exe`
-3. 编译生成完整的 Windows 图形化安装向导：`dist_installer\TransFiler_v1.1.2_Setup.exe`
+3. 编译生成完整的 Windows 图形化安装向导：`dist_installer\TransFiler_v1.2.1_Setup.exe`
 
 ---
 
 ## 🧪 自动化测试
 
-项目内置了完备的自动化测试套件，覆盖接口、术语匹配、Word/Excel/CSV 解析以及零失真验证：
+项目内置了完备的自动化测试套件，覆盖接口、术语匹配、Word/Excel/PowerPoint/CSV 解析以及零失真验证：
 
 ```powershell
 python -m pytest -v
 ```
 
 *测试覆盖项：*
-- `test_api_endpoints.py`：系统配置、术语库 CRUD、任务流集成测试与开机自检端点测试；
-- `test_docx_parser.py`：Word 样式继承与双语重构验证；
+- `test_api_endpoints.py`：系统配置、术语库 CRUD、任务流集成测试、PPTX 端到端与 Gemini 配置测试；
+- `test_pptx_parser.py`：PPTX 幻灯片图元提取、表格、双向排版重构与效果核验；
+- `test_docx_parser.py`：Word 样式继承、复杂 60 行职位说明书表格多段落无损提取与双语重构验证；
 - `test_xlsx_parser.py`：Excel 基础行高与文本提取测试；
-- `test_xlsx_zero_loss.py`：复杂 SOP 图文无损重构、Drawing 文本框提取、图片字节一致性与人名识别测试；
+- `test_xlsx_zero_loss.py`：复杂 SOP 图文无损重构、Drawing 文本框提取与图片字节一致性测试；
 - `test_glossary_engine.py`：Trie 树算法与数据库并发读写测试；
 - `test_theme_persistence.py`：服务端首屏主题注入与持久化测试。
 
@@ -184,10 +193,15 @@ python -m pytest -v
 
 ## 📄 更新日志摘要
 
+* **[v1.2.1] - 2026-09**：
+  * **PPT / PPTX 双语翻译与效果核验**：新增 PowerPoint 幻灯片、AutoShape、表格、组合图形与演讲者备注全要素深度解析，支持老版 `.ppt` 自动转码；
+  * **动态字号智能缩放 (Auto-fit)**：针对双语排版文字翻倍问题，引入自适应字号缩放与自动折行，杜绝幻灯片文字溢出失真，并引入 OpenXML 导出后自动效果核验；
+  * **Google Gemini 官方通道接入**：预置 Google Gemini 平台与官方端点，默认推荐模型为 `gemini-3.8-flash`，具备超快响应速度与极高吞吐；
+  * **Word 复杂大表格与多段落重构修复**：彻底定位并根治因 Python 临时代理对象 GC 地址复用导致的单元格遗漏致命缺陷（如《职位说明书》等复杂表格提取率由不足 25% 飞跃至 100% 全量提取 162 项）；实现单元格内多段落条款逐条紧贴双语重构；
+  * **人名识别算法回退**：彻底回退清除人名过滤规则与百家姓词库，恢复标准纯净的端到端工业级翻译通道。
 * **[v1.1.2] - 2026-09**：
   * 引入 OpenXML 级 Excel 原生无损重构引擎，彻底解决复杂 SOP 图文文件格式失真与图片拉伸问题；
   * 新增 Drawing 绘图层文本框（`<xdr:sp>`）关键作业规范提取与双语回填；
-  * 新增制造业签署姓名识别算法，人员姓名原样保留免翻译；
   * 新增全局选项与主题跨会话持久化记忆，重启软件保持原状；
   * 新增开机自动 API 连通性握手检测与实时状态指示灯联动；
   * 发布全套 Windows 安装向导与卸载向导。

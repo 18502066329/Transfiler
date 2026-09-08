@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TransFiler 制造业文档双语智能转换系统 v1.1.2</title>
+  <title>TransFiler 制造业文档双语智能转换系统 v1.2.1</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Phosphor Icons CDN (统一矢量工学图标库) -->
@@ -24,7 +24,7 @@
         <div>
           <div class="flex items-center gap-1.5">
             <h1 class="font-bold text-xs tracking-tight leading-none" style="color: var(--text-primary);">TransFiler</h1>
-            <span class="text-[9px] font-mono font-medium px-1 py-0.5 rounded" style="background: var(--accent-subtle); color: var(--accent-primary);">v1.1.2</span>
+            <span class="text-[9px] font-mono font-medium px-1 py-0.5 rounded" style="background: var(--accent-subtle); color: var(--accent-primary);">v1.2.1</span>
           </div>
           <p class="text-[10px] opacity-60 mt-0.5" style="color: var(--text-secondary);">制造业多语种双语文档系统</p>
         </div>
@@ -112,15 +112,16 @@
         
         <!-- 拖拽上传区域 -->
         <div id="dropzone" class="dropzone-box p-8 flex flex-col items-center justify-center text-center cursor-pointer group">
-          <input type="file" id="file-input" class="hidden" accept=".docx,.xlsx,.csv,.doc">
+          <input type="file" id="file-input" class="hidden" accept=".docx,.xlsx,.csv,.doc,.pptx,.ppt">
           <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-3 transition-transform duration-200 group-hover:scale-105" style="background: var(--accent-subtle); color: var(--accent-primary);">
             <i class="ph ph-upload-simple text-2xl"></i>
           </div>
           <h3 class="text-sm font-semibold mb-1" style="color: var(--text-primary);">点击选择 或 将制造文件拖拽至此处</h3>
-          <p class="text-xs mb-4" style="color: var(--text-secondary);">支持作业指导书 (SOP)、机台操作规范、工艺点检表等 Word/Excel/CSV 文件</p>
+          <p class="text-xs mb-4" style="color: var(--text-secondary);">支持作业指导书 (SOP)、培训课件、工艺点检表等 Word/PowerPoint/Excel/CSV 文件</p>
           
           <div class="flex flex-wrap gap-2 justify-center">
             <span class="app-badge"><i class="ph ph-file-doc"></i> .docx / .doc (Word)</span>
+            <span class="app-badge"><i class="ph ph-file-ppt"></i> .pptx / .ppt (PowerPoint)</span>
             <span class="app-badge"><i class="ph ph-file-xls"></i> .xlsx (Excel 表格)</span>
             <span class="app-badge"><i class="ph ph-file-csv"></i> .csv (数据表)</span>
           </div>
@@ -348,6 +349,7 @@
             <label class="block text-xs font-medium mb-1" style="color: var(--text-secondary);">大模型平台预设</label>
             <select id="settings-provider-select" onchange="handleProviderPresetChange(this.value)" class="w-full rounded-lg px-3 py-2 text-xs font-medium border app-input">
               <option value="deepseek">DeepSeek 官方平台 (推荐 · 极高性价比与制造业理解力)</option>
+              <option value="gemini">Google Gemini 官方平台 (默认推荐 gemini-3.8-flash)</option>
               <option value="siliconflow">硅基流动 (SiliconFlow) - DeepSeek-V3 / R1</option>
               <option value="dashscope">阿里云百炼 (DashScope) - DeepSeek-V3 / 通义千问</option>
               <option value="zhipu">智谱开放平台 (GLM-4-Flash 免费高可用)</option>

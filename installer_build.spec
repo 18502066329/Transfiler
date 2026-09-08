@@ -48,7 +48,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='TransFiler_v1.1.2_Setup',
+    name='TransFiler_v1.2.1_Setup',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

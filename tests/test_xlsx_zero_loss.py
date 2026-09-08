@@ -1,24 +1,7 @@
 import os
 import zipfile
 import pytest
-from backend.core.parser_xlsx import XlsxParserEngine, is_person_name_text
-
-def test_person_name_detection():
-    # 纯人名
-    is_name, val = is_person_name_text("罗成耿")
-    assert is_name is True
-    assert val == "罗成耿"
-
-    # 带前缀人名
-    is_name, val = is_person_name_text("制订：罗成耿")
-    assert is_name is True
-    assert val == "罗成耿"
-
-    # 常见工业词汇（非人名）
-    assert is_person_name_text("平衡率")[0] is False
-    assert is_person_name_text("工程")[0] is False
-    assert is_person_name_text("品质")[0] is False
-    assert is_person_name_text("WI-FJS-203")[0] is False
+from backend.core.parser_xlsx import XlsxParserEngine
 
 def test_xlsx_lossless_extraction_and_rebuild():
     sample_file = "WI-FJS-204 HQ6200101A330礼盒(4).xlsx"
@@ -32,18 +15,9 @@ def test_xlsx_lossless_extraction_and_rebuild():
     textbox_items = [it for it in items if it["type"] == "excel_textbox"]
     assert len(textbox_items) > 0
 
-    # 验证提取并识别出人名
-    name_items = [it for it in items if it.get("is_person_name")]
-    assert any(it["source_text"] == "罗成耿" for it in name_items)
-
     # 重构测试
     out_file = "test_lossless_output.xlsx"
-    items_map = {}
-    for it in items:
-        if it.get("is_person_name"):
-            items_map[it["id"]] = it["source_text"] # 保持人名不翻译
-        else:
-            items_map[it["id"]] = f"Trans_{it['source_text'][:10]}"
+    items_map = {it["id"]: f"Trans_{it['source_text'][:10]}" for it in items}
 
     try:
         XlsxParserEngine.rebuild_bilingual_doc(

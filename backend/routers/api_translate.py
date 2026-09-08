@@ -19,6 +19,7 @@ from backend.db.database import (
 from backend.core.parser_docx import DocxParserEngine
 from backend.core.parser_xlsx import XlsxParserEngine
 from backend.core.parser_csv import CsvParserEngine
+from backend.core.parser_pptx import PptxParserEngine
 from backend.core.doc_converter import DocConverter
 from backend.core.glossary_matcher import GlossaryMatcher
 from backend.core.translator import LLMTranslator
@@ -48,8 +49,8 @@ async def upload_document(file: UploadFile = File(...)):
     filename = file.filename
     ext = Path(filename).suffix.lower()
     
-    if ext not in [".docx", ".xlsx", ".csv", ".doc"]:
-        raise HTTPException(status_code=400, detail="不支持的文件格式，仅支持 .docx / .xlsx / .csv / .doc")
+    if ext not in [".docx", ".xlsx", ".csv", ".doc", ".pptx", ".ppt"]:
+        raise HTTPException(status_code=400, detail="不支持的文件格式，仅支持 .docx / .xlsx / .csv / .doc / .pptx / .ppt")
     
     task_id = str(uuid.uuid4())[:8]
     save_path = UPLOAD_DIR / f"{task_id}_{filename}"
@@ -65,6 +66,13 @@ async def upload_document(file: UploadFile = File(...)):
             ext = ".docx"
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
+    # 处理老版 .ppt
+    elif ext == ".ppt":
+        try:
+            actual_file_path = DocConverter.convert_ppt_to_pptx(actual_file_path)
+            ext = ".pptx"
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
 
     # 解析提取文档结构
     items = []
@@ -78,6 +86,9 @@ async def upload_document(file: UploadFile = File(...)):
     elif ext == ".csv":
         file_type = "csv"
         items = CsvParserEngine.extract_content(actual_file_path)
+    elif ext == ".pptx":
+        file_type = "pptx"
+        items = PptxParserEngine.extract_content(actual_file_path)
 
     # 保存初始草稿数据
     file_size = os.path.getsize(actual_file_path)
@@ -209,6 +220,8 @@ def export_bilingual_document(data: ExportTaskModel):
     ext = Path(orig_name).suffix.lower()
     if ext == ".doc":
         ext = ".docx"
+    elif ext == ".ppt":
+        ext = ".pptx"
 
     source_lang = task.get("source_lang", "zh")
     target_lang = task.get("target_lang", "en")
@@ -247,6 +260,16 @@ def export_bilingual_document(data: ExportTaskModel):
             layout_mode=layout_mode,
             source_lang=source_lang,
             target_lang=target_lang
+        )
+    elif file_type == "pptx":
+        PptxParserEngine.rebuild_bilingual_doc(
+            original_file_path=file_path,
+            output_file_path=output_path,
+            items_map=items_map,
+            layout_mode=layout_mode,
+            source_lang=source_lang,
+            target_lang=target_lang,
+            font_en=font_en
         )
 
     # 记录到历史任务

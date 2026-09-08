@@ -167,7 +167,107 @@ def create_sample_glossary_xlsx():
     wb.save(str(file_path))
     print(f"已创建测试样本: {file_path}")
 
+def create_sample_pptx():
+    from pptx import Presentation
+    from pptx.util import Inches, Pt
+    from pptx.enum.text import PP_ALIGN
+    from pptx.dml.color import RGBColor
+
+    file_path = SAMPLE_DIR / "注塑车间生产工艺与安全培训课件.pptx"
+    prs = Presentation()
+    # 16:9 宽屏尺寸
+    prs.slide_width = Inches(13.333)
+    prs.slide_height = Inches(7.5)
+
+    blank_layout = prs.slide_layouts[6]
+
+    # Slide 1: 封面幻灯片
+    slide1 = prs.slides.add_slide(blank_layout)
+    tx_box = slide1.shapes.add_textbox(Inches(1.5), Inches(2.0), Inches(10.33), Inches(3.0))
+    tf1 = tx_box.text_frame
+    tf1.word_wrap = True
+
+    p1 = tf1.paragraphs[0]
+    p1.text = "注塑车间生产工艺与安全规程培训"
+    p1.font.name = "Microsoft YaHei"
+    p1.font.size = Pt(36)
+    p1.font.bold = True
+    p1.font.color.rgb = RGBColor(30, 41, 59)
+    p1.alignment = PP_ALIGN.CENTER
+
+    p2 = tf1.add_paragraph()
+    p2.text = "2026年度新员工岗位技能与标准化作业 (SOP) 专项教材"
+    p2.font.size = Pt(18)
+    p2.font.color.rgb = RGBColor(100, 116, 139)
+    p2.alignment = PP_ALIGN.CENTER
+
+    p3 = tf1.add_paragraph()
+    p3.text = "编制审核：罗成耿"
+    p3.font.size = Pt(14)
+    p3.font.color.rgb = RGBColor(71, 85, 105)
+    p3.alignment = PP_ALIGN.CENTER
+
+    # Slide 2: 工艺与安全规范条目
+    slide2 = prs.slides.add_slide(blank_layout)
+    title_box2 = slide2.shapes.add_textbox(Inches(1.0), Inches(0.8), Inches(11.3), Inches(1.0))
+    tf2_title = title_box2.text_frame
+    p2_t = tf2_title.paragraphs[0]
+    p2_t.text = "一、车间核心作业安全防护规范"
+    p2_t.font.name = "Microsoft YaHei"
+    p2_t.font.size = Pt(24)
+    p2_t.font.bold = True
+
+    content_box2 = slide2.shapes.add_textbox(Inches(1.0), Inches(2.2), Inches(11.3), Inches(4.5))
+    tf2_content = content_box2.text_frame
+    tf2_content.word_wrap = True
+
+    rules = [
+        "1. 操作人员进入车间必须佩戴防静电劳保鞋、安全帽与防护目镜；",
+        "2. 机台运行状态下，严禁将手伸入合模机构与射胶喷嘴区域；",
+        "3. 开机作业前必须测试急停开关与安全门光电保护器，确认联动停机功能灵敏；",
+        "4. 发生模具报警或卡料时，必须先按下急停按钮并通知机修技术员；",
+        "现场责任人：张三"
+    ]
+    for idx, r in enumerate(rules):
+        p = tf2_content.paragraphs[0] if idx == 0 else tf2_content.add_paragraph()
+        p.text = r
+        p.font.size = Pt(16)
+        p.space_after = Pt(12)
+
+    # Slide 3: 表格幻灯片
+    slide3 = prs.slides.add_slide(blank_layout)
+    title_box3 = slide3.shapes.add_textbox(Inches(1.0), Inches(0.8), Inches(11.3), Inches(1.0))
+    p3_t = title_box3.text_frame.paragraphs[0]
+    p3_t.text = "二、核心注塑参数控制标准表"
+    p3_t.font.name = "Microsoft YaHei"
+    p3_t.font.size = Pt(24)
+    p3_t.font.bold = True
+
+    table_shape = slide3.shapes.add_table(rows=4, cols=3, left=Inches(1.0), top=Inches(2.2), width=Inches(11.3), height=Inches(3.5))
+    tbl = table_shape.table
+    tbl_data = [
+        ["工艺参数名称", "设定标准值", "控制公差要求"],
+        ["射胶压力 (Injection Pressure)", "120 MPa", "± 5 MPa"],
+        ["模具预热温度 (Mold Temp)", "85 ℃", "± 3 ℃"],
+        ["保压时间 (Holding Time)", "6.5 秒", "± 0.2 秒"]
+    ]
+    for r_idx, row_vals in enumerate(tbl_data):
+        for c_idx, val in enumerate(row_vals):
+            cell = tbl.cell(r_idx, c_idx)
+            cell.text = val
+            p = cell.text_frame.paragraphs[0]
+            p.font.size = Pt(14)
+            if r_idx == 0:
+                p.font.bold = True
+
+    # 演讲者备注
+    slide3.notes_slide.notes_text_frame.text = "培训主讲人注意：重点向学员强调保压时间与产品缩水缺陷的对应关系。"
+
+    prs.save(str(file_path))
+    print(f"已创建测试样本: {file_path}")
+
 if __name__ == "__main__":
     create_sample_docx()
     create_sample_xlsx()
     create_sample_glossary_xlsx()
+    create_sample_pptx()

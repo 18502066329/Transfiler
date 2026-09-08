@@ -35,6 +35,7 @@ hiddenimports = [
     'starlette.routing',
     'openpyxl',
     'docx',
+    'pptx',
     'httpx',
     'pydantic',
     'pydantic_core',
@@ -57,13 +58,14 @@ hiddenimports = [
     'backend.core.parser_docx',
     'backend.core.parser_xlsx',
     'backend.core.parser_csv',
+    'backend.core.parser_pptx',
     'backend.core.doc_converter',
     'backend.core.glossary_matcher',
     'backend.core.translator',
 ]
 
-# 自动收集 uvicorn, fastapi, pywebview 数据与依赖
-for pkg in ['uvicorn', 'fastapi', 'pywebview']:
+# 自动收集 uvicorn, fastapi, pywebview, pptx 数据与依赖
+for pkg in ['uvicorn', 'fastapi', 'pywebview', 'pptx']:
     try:
         pkg_datas, pkg_binaries, pkg_hidden = collect_all(pkg)
         datas.extend(pkg_datas)

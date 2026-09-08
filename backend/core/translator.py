@@ -27,6 +27,12 @@ def clean_base_url(url: str) -> str:
     if not u.startswith("http://") and not u.startswith("https://"):
         u = "https://" + u
     u = u.rstrip("/")
+    # 如果是 Gemini 官方根路径但未带 /openai，自动补齐 OpenAI 兼容端点
+    if "generativelanguage.googleapis.com" in u and not u.endswith("/openai"):
+        if u.endswith("/v1beta") or u.endswith("/v1"):
+            u = f"{u}/openai"
+        elif u == "https://generativelanguage.googleapis.com":
+            u = "https://generativelanguage.googleapis.com/v1beta/openai"
     # 如果用户填入了完整的 /chat/completions 端点，自动去除
     if u.endswith("/chat/completions"):
         u = u[:-len("/chat/completions")].rstrip("/")
@@ -87,6 +93,38 @@ class LLMTranslator:
             async with httpx.AsyncClient(timeout=timeout, follow_redirects=True, verify=False, trust_env=True) as client:
                 return await client.post(url, headers=headers, json=payload)
 
+    async def _post_request_with_retry(
+        self,
+        payload: Dict[str, Any],
+        timeout: float = 60.0,
+        max_retries: int = 3
+    ) -> httpx.Response:
+        """带自动指数退避重试的 POST 请求（自动克服 503 模型瞬时过载与 429 频控）"""
+        retry_delays = [2.0, 4.0, 7.0]
+        last_resp = None
+        for attempt in range(max_retries + 1):
+            try:
+                resp = await self._post_request(payload, timeout=timeout)
+                # 若正常成功或属于非重试型客户端错误 (如 400, 401)，直接返回
+                if resp.status_code not in [429, 502, 503, 504]:
+                    return resp
+                last_resp = resp
+            except Exception as e:
+                if attempt == max_retries:
+                    raise e
+
+            # 若遇到 503 (Model Overloaded) 或 429 (Rate Limit)，执行指数退避重试
+            if attempt < max_retries:
+                delay = retry_delays[min(attempt, len(retry_delays) - 1)]
+                if last_resp and "retry-after" in last_resp.headers:
+                    try:
+                        delay = max(delay, float(last_resp.headers["retry-after"]))
+                    except Exception:
+                        pass
+                await asyncio.sleep(delay)
+
+        return last_resp
+
     async def test_connection(self) -> Dict[str, Any]:
         """测试 API Key 与服务连通性（带详细诊断）"""
         if not self.api_key:
@@ -123,6 +161,11 @@ class LLMTranslator:
                 return {
                     "success": False,
                     "message": f"API Key 认证失败 (401 Unauthorized)。\n请检查：\n1. 复制的 API Key 是否完整无误；\n2. 当前模型提供商是否与 Key 匹配；\n3. 新创建的 Key 是否已生效。\n接口返回: {err_msg}"
+                }
+            elif status == 403:
+                return {
+                    "success": False,
+                    "message": f"访问被拒绝 (403 Forbidden)。\n可能原因：\n1. 如果使用 Google Gemini，由于区域合规限制，请确保代理软件开启全局海外节点；\n2. 请确认当前 API Key 拥有访问模型「{self.model_name}」的权限。\n接口返回: {err_msg}"
                 }
             elif status in [402, 429]:
                 return {
@@ -187,9 +230,6 @@ class LLMTranslator:
                 src = item.get("source_text", "").strip()
                 if not src:
                     item["target_text"] = ""
-                elif item.get("is_person_name"):
-                    # 人名免翻译保护：直接保留原姓名
-                    item["target_text"] = src
                 else:
                     if item.get("matched_terms"):
                         item["target_text"] = f"[Mock {target_lang_name}] " + item["matched_terms"][0]["target"]
@@ -207,16 +247,13 @@ class LLMTranslator:
         for i in range(0, total_items, chunk_size):
             chunk = items[i:i + chunk_size]
             
-            # 过滤出非空且非纯人名的待翻译文本 (纯人名直接保留原姓名)
+            # 过滤出非空的待翻译文本
             query_payload = {}
             for it in chunk:
                 s_text = it.get("source_text", "").strip()
                 if not s_text:
                     continue
-                if it.get("is_person_name"):
-                    it["target_text"] = s_text
-                else:
-                    query_payload[it["id"]] = s_text
+                query_payload[it["id"]] = s_text
 
             if query_payload:
                 system_prompt = f"""你是一名精通制造业工程、工业制造 SOP 及质量体系（IATF 16949 / ISO）的资深工业翻译专家。
@@ -225,9 +262,8 @@ class LLMTranslator:
 要求：
 1. 语言表达必须严谨、工业化、符合工程作业规范；
 2. 保持简洁专业，不要添加任何额外的解释或引导词；
-3. 【人名与签署保护】：文档中的人员姓名（如编制、审核、批准、签名栏中的中文姓名，例如：罗成耿、张三、李四等）请一律保持原样中文姓名不变，严禁将中文姓名翻译为拼音、拼音缩写或英文单词；
-4. {term_constraints}
-5. 必须直接返回与输入 JSON key 一一对应的 JSON 格式结果，格式如下：
+3. {term_constraints}
+4. 必须直接返回与输入 JSON key 一一对应的 JSON 格式结果，格式如下：
 {{
   "key1": "翻译结果1",
   "key2": "翻译结果2"
@@ -246,7 +282,7 @@ class LLMTranslator:
 
                 parsed = {}
                 try:
-                    resp = await self._post_request(body, timeout=60.0)
+                    resp = await self._post_request_with_retry(body, timeout=60.0)
                     if resp.status_code == 200:
                         res_json = resp.json()
                         content = res_json["choices"][0]["message"]["content"]
@@ -261,7 +297,7 @@ class LLMTranslator:
                             ],
                             "temperature": 0.2
                         }
-                        resp2 = await self._post_request(body_fallback, timeout=60.0)
+                        resp2 = await self._post_request_with_retry(body_fallback, timeout=60.0)
                         if resp2.status_code == 200:
                             content2 = resp2.json()["choices"][0]["message"]["content"]
                             parsed = parse_json_from_response(content2)
@@ -269,11 +305,20 @@ class LLMTranslator:
                             for it in chunk:
                                 it["target_text"] = f"[翻译失败 {resp2.status_code}] " + it.get("source_text", "")
                     else:
+                        err_label = f"翻译失败 {resp.status_code}"
+                        if resp.status_code == 503:
+                            err_label = "Gemini 503 谷歌模型瞬时负载过高，已自动重试多次仍繁忙，请稍候再试"
+                        elif resp.status_code == 429:
+                            err_label = "Gemini 429 触发免费额度限制(20次)或请求过频，请稍后重试"
                         for it in chunk:
-                            it["target_text"] = f"[翻译失败 {resp.status_code}] " + it.get("source_text", "")
+                            it["target_text"] = f"[{err_label}] " + it.get("source_text", "")
                 except Exception as e:
                     for it in chunk:
                         it["target_text"] = f"[翻译异常: {str(e)[:30]}] " + it.get("source_text", "")
+
+                # 批次间平滑节流，避免瞬间突发请求打满 Google RPM
+                if i + chunk_size < total_items:
+                    await asyncio.sleep(0.6)
 
                 # 填充解析出的结果
                 if parsed:

@@ -6,6 +6,11 @@ const PRESETS = {
     modelName: 'deepseek-chat',
     desc: 'DeepSeek 官方开放平台 (推荐 · 极高性价比与制造业理解力)'
   },
+  'gemini': {
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+    modelName: 'gemini-3.8-flash',
+    desc: 'Google Gemini 官方平台 (默认推荐 gemini-3.8-flash · 极高推理速度与精度)'
+  },
   'siliconflow': {
     baseUrl: 'https://api.siliconflow.cn/v1',
     modelName: 'deepseek-ai/DeepSeek-V3',
@@ -77,6 +82,17 @@ function handleProviderPresetChange(providerKey) {
   if (preset.baseUrl) baseUrlInput.value = preset.baseUrl;
   if (preset.modelName) modelNameInput.value = preset.modelName;
   if (presetTip) presetTip.innerText = preset.desc;
+
+  const keyInput = document.getElementById('settings-api-key');
+  if (keyInput) {
+    if (providerKey === 'gemini') {
+      keyInput.placeholder = '填入 Google AI Studio 的 Gemini API Key (AIzaSy...)';
+    } else if (providerKey === 'ollama') {
+      keyInput.placeholder = 'Ollama 本地服务无需配置 API Key';
+    } else {
+      keyInput.placeholder = '填入 sk- 开头的 API Key 密钥';
+    }
+  }
 }
 
 function toggleApiKeyVisibility() {
