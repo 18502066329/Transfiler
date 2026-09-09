@@ -1,7 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Dict, Any, Optional
-from backend.config import SUPPORTED_LANGUAGES
+import os
+import subprocess
+from pathlib import Path
+from backend.config import SUPPORTED_LANGUAGES, EXPORT_DIR
 from backend.db.database import get_all_settings, update_settings_batch, update_setting
 from backend.core.translator import LLMTranslator
 
@@ -25,6 +28,12 @@ class TestConnectionModel(BaseModel):
     api_key: str
     base_url: str
     model_name: str
+
+class OpenExportDirModel(BaseModel):
+    export_dir: Optional[str] = None
+
+class BrowseExportDirModel(BaseModel):
+    initial_dir: Optional[str] = None
 
 @router.get("")
 def get_settings():
@@ -79,3 +88,59 @@ async def check_current_connection():
 @router.get("/languages")
 def get_languages():
     return {"status": "success", "data": SUPPORTED_LANGUAGES}
+
+@router.get("/default-export-dir")
+def get_default_export_dir():
+    """获取系统默认导出路径"""
+    return {"status": "success", "default_export_dir": str(EXPORT_DIR)}
+
+@router.post("/browse-export-dir")
+def browse_export_dir(data: Optional[BrowseExportDirModel] = None):
+    """在 Windows 环境下弹出原生文件夹选择框，返回用户选取的路径"""
+    initial = data.initial_dir if (data and data.initial_dir) else str(EXPORT_DIR)
+    selected_dir = ""
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+        root = tk.Tk()
+        root.withdraw()
+        root.wm_attributes('-topmost', 1)
+        selected_dir = filedialog.askdirectory(initialdir=initial, title="选择 TransFiler 双语文件默认导出目录")
+        root.destroy()
+    except Exception:
+        # Fallback: 使用 PowerShell FolderBrowserDialog
+        try:
+            ps_script = f"""
+Add-Type -AssemblyName System.Windows.Forms
+$f = New-Object System.Windows.Forms.FolderBrowserDialog
+$f.Description = '选择 TransFiler 双语文件默认导出目录'
+$f.SelectedPath = '{initial}'
+if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {{
+    Write-Output $f.SelectedPath
+}}
+"""
+            res = subprocess.run(["powershell", "-NoProfile", "-Command", ps_script], capture_output=True, text=True)
+            selected_dir = res.stdout.strip()
+        except Exception:
+            pass
+
+    if selected_dir and os.path.isdir(selected_dir):
+        norm_dir = os.path.normpath(selected_dir)
+        return {"status": "success", "selected_dir": norm_dir}
+    return {"status": "cancelled", "message": "未选择目录或已取消操作"}
+
+@router.post("/open-export-dir")
+def open_export_dir(data: Optional[OpenExportDirModel] = None):
+    """在 Windows 资源管理器中打开导出目录"""
+    settings = get_all_settings()
+    target = data.export_dir if (data and data.export_dir) else settings.get("export_dir", str(EXPORT_DIR))
+    if not target:
+        target = str(EXPORT_DIR)
+    
+    os.makedirs(target, exist_ok=True)
+    try:
+        subprocess.run(f'explorer "{os.path.abspath(target)}"', shell=True)
+        return {"status": "success", "message": f"已在资源管理器中打开: {target}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"打开目录失败: {str(e)}")
+

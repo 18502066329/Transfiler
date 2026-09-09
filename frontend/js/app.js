@@ -11,12 +11,45 @@ const AppState = {
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', async () => {
+  initSidebar();
   initTheme();
   await loadInitialSettings();
   await loadLanguages();
   await updateSidebarGlossaryCount();
   restoreTranslateOptions();
 });
+
+// --- 侧边栏折叠/展开功能 ---
+function initSidebar() {
+  const isCollapsed = localStorage.getItem('transfiler_sidebar_collapsed') === 'true';
+  applySidebarCollapse(isCollapsed);
+}
+
+function toggleSidebar() {
+  const sidebar = document.getElementById('app-sidebar');
+  if (!sidebar) return;
+  const willCollapse = !sidebar.classList.contains('sidebar-collapsed');
+  applySidebarCollapse(willCollapse);
+}
+
+function applySidebarCollapse(collapsed) {
+  const sidebar = document.getElementById('app-sidebar');
+  const toggleIcon = document.getElementById('sidebar-toggle-icon');
+  const toggleBtn = document.getElementById('sidebar-toggle-btn');
+  if (!sidebar) return;
+
+  if (collapsed) {
+    sidebar.classList.add('sidebar-collapsed');
+    if (toggleIcon) toggleIcon.className = 'ph ph-caret-right text-sm';
+    if (toggleBtn) toggleBtn.title = '展开功能栏';
+  } else {
+    sidebar.classList.remove('sidebar-collapsed');
+    if (toggleIcon) toggleIcon.className = 'ph ph-caret-left text-sm';
+    if (toggleBtn) toggleBtn.title = '收起功能栏';
+  }
+
+  localStorage.setItem('transfiler_sidebar_collapsed', collapsed ? 'true' : 'false');
+}
 
 // --- 双主题切换引擎 (Dark / Light) 记忆持久化 ---
 function initTheme() {
@@ -31,6 +64,20 @@ function toggleTheme() {
   applyTheme(next, true);
   // 同步持久化至数据库
   saveOptionToBackend({ theme: next });
+}
+
+function updateSettingsThemeCards(themeKey) {
+  const darkCard = document.getElementById('theme-card-dark');
+  const lightCard = document.getElementById('theme-card-light');
+  if (!darkCard || !lightCard) return;
+
+  if (themeKey === 'dark') {
+    darkCard.classList.add('active');
+    lightCard.classList.remove('active');
+  } else {
+    lightCard.classList.add('active');
+    darkCard.classList.remove('active');
+  }
 }
 
 function applyTheme(themeKey, showNotice = true) {
@@ -49,6 +96,9 @@ function applyTheme(themeKey, showNotice = true) {
     themeIcon.className = themeKey === 'dark' ? 'ph ph-moon text-sm' : 'ph ph-sun text-sm text-amber-500';
   }
 
+  // 同步更新设置面板中的主题卡片高亮状态
+  updateSettingsThemeCards(themeKey);
+
   if (showNotice) {
     showToast(themeKey === 'dark' ? '已切换为深色模式' : '已切换为浅色模式', 'info');
   }
@@ -61,7 +111,7 @@ function switchTab(tab) {
     translate: '新建双语文档制作',
     diff: '双栏校对与排版检查',
     glossary: '制造业专有术语词典管理',
-    settings: '大模型与系统配置',
+    settings: '系统设置与环境配置',
     history: '双语文件交付历史'
   };
 
@@ -69,7 +119,7 @@ function switchTab(tab) {
     translate: '文档制作',
     diff: '双栏校对',
     glossary: '专有术语库',
-    settings: '系统配置',
+    settings: '系统设置',
     history: '交付历史'
   };
 
@@ -133,6 +183,7 @@ async function loadInitialSettings() {
 // 开机静默执行 API 连通性检测
 async function checkApiConnectionOnStartup(settings) {
   const dot = document.getElementById('engine-status-dot');
+  const dotCompact = document.getElementById('engine-status-dot-compact');
   const text = document.getElementById('engine-status-text');
   const badge = document.getElementById('engine-status-badge');
 
@@ -148,6 +199,10 @@ async function checkApiConnectionOnStartup(settings) {
 
   // 设置为正在检测状态
   if (dot) dot.className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse";
+  if (dotCompact) {
+    dotCompact.className = "w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse ring-2 ring-amber-400/20";
+    dotCompact.title = "检测 API 连接中...";
+  }
   if (text) text.innerText = `检测 API 连接...`;
   if (badge) {
     badge.className = "text-[9px] font-mono px-1.5 py-0.5 rounded font-medium";
@@ -173,12 +228,17 @@ async function checkApiConnectionOnStartup(settings) {
 // 统一更新侧边栏与全局 API 状态指示器
 function updateEngineStatusUI(result) {
   const dot = document.getElementById('engine-status-dot');
+  const dotCompact = document.getElementById('engine-status-dot-compact');
   const text = document.getElementById('engine-status-text');
   const badge = document.getElementById('engine-status-badge');
   const container = document.getElementById('engine-status-container');
 
   if (result.success) {
     if (dot) dot.className = "w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]";
+    if (dotCompact) {
+      dotCompact.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] ring-2 ring-emerald-500/20";
+      dotCompact.title = `API 在线: ${result.model_name || '大模型'} 引擎 (点击前往设置)`;
+    }
     if (text) text.innerText = `${result.model_name || 'DeepSeek'} 引擎`;
     if (badge) {
       badge.className = "text-[9px] font-mono px-1.5 py-0.5 rounded font-medium";
@@ -189,6 +249,10 @@ function updateEngineStatusUI(result) {
     if (container) container.title = `${result.message || 'API 连通正常'} (点击前往配置)`;
   } else if (result.status === 'unconfigured') {
     if (dot) dot.className = "w-2 h-2 rounded-full bg-amber-400";
+    if (dotCompact) {
+      dotCompact.className = "w-2.5 h-2.5 rounded-full bg-amber-400 ring-2 ring-amber-500/20";
+      dotCompact.title = "本地模拟模式 (未配置 API Key)";
+    }
     if (text) text.innerText = "本地模拟模式";
     if (badge) {
       badge.className = "text-[9px] font-mono px-1.5 py-0.5 rounded font-medium";
@@ -200,6 +264,10 @@ function updateEngineStatusUI(result) {
   } else {
     // 失败状态 (红点告警 + 连接失败标签)
     if (dot) dot.className = "w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]";
+    if (dotCompact) {
+      dotCompact.className = "w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)] ring-2 ring-rose-500/20";
+      dotCompact.title = `连接失败: ${result.message}\n(点击前往检查配置与网络)`;
+    }
     if (text) text.innerText = `${result.model_name || 'API'} 连接失败`;
     if (badge) {
       badge.className = "text-[9px] font-mono px-1.5 py-0.5 rounded font-medium";

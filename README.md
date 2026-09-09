@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-v1.2.1-blue.svg?style=flat-square)
+![Version](https://img.shields.io/badge/version-v1.2.5-blue.svg?style=flat-square)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-green.svg?style=flat-square)
 ![Framework](https://img.shields.io/badge/Framework-FastAPI%20%7C%20PyWebView-orange.svg?style=flat-square)
 ![Engine](https://img.shields.io/badge/Engine-OpenXML%20%7C%20PPTX%20Lossless-blueviolet.svg?style=flat-square)
@@ -81,7 +81,7 @@
 | **📑 文档制作** | 任务起始页，文件拖拽导入与规则设置 | 经典单列纵向工作流，触感排版规则卡片，语言一键互换 |
 | **🔍 双栏校对** | 双语排版检查与单元格级在线微调 | 双向互锁同步滚动（Sync Scroll），命中术语徽章，即时加词 |
 | **📚 专有术语库** | 工厂专有词汇沉淀与管理 | 支持导入、导出、分类检索、条目增删改查 |
-| **⚙️ 系统与模型** | 大模型 API 鉴权、提供商切换与导出配置 | 预置主流服务商，API Key 自动清洗脱敏，一键连通性测试 |
+| **⚙️ 系统设置** | 大模型 API 配置、存储路径、外观主题与系统关于 | 四大卡片式工学架构，模型预设、本地导出目录浏览/打开、双主题即时切换与持久化 |
 | **🕒 交付历史** | 历史转换成果查看与归档 | 耗时与词条统计，一键在 Windows 资源管理器中定位文件 |
 
 ---
@@ -93,7 +93,7 @@
 无需安装 Python 或任何依赖环境，开箱即用：
 
 1. **图形化安装版**：
-   - 运行 [`TransFiler_v1.2.1_Setup.exe`] 的安装向导；
+   - 运行 [`TransFiler_v1.2.5_Setup.exe`] 的安装向导；
    - 支持自定义安装路径、创建桌面快捷方式、创建开始菜单目录并自动注册至 Windows 控制面板。
 2. **绿色免安装版**：
    - 双击运行 [`dist/TransFiler.exe`] 即可秒级启动原生桌面控制台。
@@ -168,7 +168,7 @@ TransFiler 采用标准 OpenAI 兼容协议，支持市面上几乎所有的主�
 该批处理将依次自动执行：
 1. 编译生成主程序免安装版：`dist\TransFiler.exe`
 2. 编译生成独立卸载程序：`dist\uninstall.exe`
-3. 编译生成完整的 Windows 图形化安装向导：`dist_installer\TransFiler_v1.2.1_Setup.exe`
+3. 编译生成完整的 Windows 图形化安装向导：`dist_installer\TransFiler_v1.2.5_Setup.exe`
 
 ---
 
@@ -181,7 +181,7 @@ python -m pytest -v
 ```
 
 *测试覆盖项：*
-- `test_api_endpoints.py`：系统配置、术语库 CRUD、任务流集成测试、PPTX 端到端与 Gemini 配置测试；
+- `test_api_endpoints.py`：系统配置、术语库 CRUD、任务流集成测试、PPTX 端到端、Gemini 配置及 v1.2.5 导出目录与主题接口测试；
 - `test_pptx_parser.py`：PPTX 幻灯片图元提取、表格、双向排版重构与效果核验；
 - `test_docx_parser.py`：Word 样式继承、复杂 60 行职位说明书表格多段落无损提取与双语重构验证；
 - `test_xlsx_parser.py`：Excel 基础行高与文本提取测试；
@@ -193,6 +193,12 @@ python -m pytest -v
 
 ## 📄 更新日志摘要
 
+* **[v1.2.5] - 2026-09**：
+  * **系统设置中心全面改版升级**：重构为 4 大独立卡片式控制中心（模型配置、存储路径、外观主题、系统关于），提供工业级设置管理；
+  * **API 接口深度整合入设置**：全面整合 DeepSeek、Gemini、SiliconFlow、DashScope、智谱、Moonshot、OpenAI、本地 Ollama 及自定义网关，支持密钥掩码切换与连通性即时自检；
+  * **文件导出位置自定义管理**：新增默认导出目录设置，集成 Windows 原生文件夹选择器（支持浏览选取、一键在资源管理器中打开与恢复默认）；
+  * **双主题整合入设置**：设置面板内嵌深色（Pro Dark）与浅色（Studio Light）可视化卡片，双向联动并跨会话持久化；
+  * **左侧功能栏 收起 / 展开 交互引擎**：侧边栏支持一键折叠为 64px 极简小图标模式，状态指示微光自适应，状态持久化记忆。
 * **[v1.2.1] - 2026-09**：
   * **PPT / PPTX 双语翻译与效果核验**：新增 PowerPoint 幻灯片、AutoShape、表格、组合图形与演讲者备注全要素深度解析，支持老版 `.ppt` 自动转码；
   * **动态字号智能缩放 (Auto-fit)**：针对双语排版文字翻倍问题，引入自适应字号缩放与自动折行，杜绝幻灯片文字溢出失真，并引入 OpenXML 导出后自动效果核验；

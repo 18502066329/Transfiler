@@ -64,11 +64,91 @@ async function loadSettings() {
       document.getElementById('settings-api-key').value = data.api_key || '';
       document.getElementById('settings-base-url').value = data.base_url || 'https://api.deepseek.com/v1';
       document.getElementById('settings-model-name').value = data.model_name || 'deepseek-chat';
-      document.getElementById('settings-export-dir').value = data.export_dir || '';
+      
+      const exportDirInput = document.getElementById('settings-export-dir');
+      if (exportDirInput) {
+        exportDirInput.value = data.export_dir || '';
+        // 如果未设置自定义导出路径，获取默认路径显示为 placeholder
+        if (!data.export_dir) {
+          fetch('/api/settings/default-export-dir')
+            .then(r => r.json())
+            .then(d => {
+              if (d.status === 'success' && d.default_export_dir) {
+                exportDirInput.placeholder = d.default_export_dir;
+              }
+            })
+            .catch(() => {});
+        }
+      }
+
+      // 同步设置面板中的主题卡片高亮状态
+      updateSettingsThemeCards(AppState.currentTheme || data.theme || 'dark');
     }
   } catch (err) {
     console.error('获取设置失败:', err);
   }
+}
+
+// 浏览并选择本地导出目录
+async function browseExportDir() {
+  const currentVal = document.getElementById('settings-export-dir').value.trim();
+  try {
+    const res = await fetch('/api/settings/browse-export-dir', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ initial_dir: currentVal || '' })
+    });
+    const json = await res.json();
+    if (json.status === 'success' && json.selected_dir) {
+      document.getElementById('settings-export-dir').value = json.selected_dir;
+      showToast(`已选择导出目录: ${json.selected_dir}`, 'success');
+    } else if (json.status === 'cancelled') {
+      // 用户取消选取，不报错
+    }
+  } catch (err) {
+    showToast('选择目录异常: ' + err.message, 'error');
+  }
+}
+
+// 在资源管理器中打开导出目录
+async function openExportDir() {
+  const currentVal = document.getElementById('settings-export-dir').value.trim();
+  try {
+    const res = await fetch('/api/settings/open-export-dir', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ export_dir: currentVal || '' })
+    });
+    const json = await res.json();
+    if (json.status === 'success') {
+      showToast(json.message || '已在资源管理器中打开导出目录', 'success');
+    } else {
+      showToast(json.detail || '打开导出目录失败', 'error');
+    }
+  } catch (err) {
+    showToast('打开目录异常: ' + err.message, 'error');
+  }
+}
+
+// 恢复系统默认导出目录
+async function resetExportDir() {
+  try {
+    const res = await fetch('/api/settings/default-export-dir');
+    const json = await res.json();
+    if (json.status === 'success' && json.default_export_dir) {
+      document.getElementById('settings-export-dir').value = json.default_export_dir;
+      showToast('已重置为系统默认导出路径: ' + json.default_export_dir, 'info');
+    }
+  } catch (err) {
+    showToast('恢复默认路径失败: ' + err.message, 'error');
+  }
+}
+
+// 在设置面板中切换主题卡片
+function selectThemeInSettings(themeKey) {
+  applyTheme(themeKey, true);
+  saveOptionToBackend({ theme: themeKey });
+  updateSettingsThemeCards(themeKey);
 }
 
 function handleProviderPresetChange(providerKey) {
@@ -173,6 +253,7 @@ async function saveAllSettings(silent = false) {
   const baseUrl = document.getElementById('settings-base-url').value.trim();
   const modelName = document.getElementById('settings-model-name').value.trim();
   const exportDir = document.getElementById('settings-export-dir').value.trim();
+  const theme = AppState.currentTheme || 'dark';
 
   try {
     const res = await fetch('/api/settings', {
@@ -183,7 +264,8 @@ async function saveAllSettings(silent = false) {
         api_key: apiKey,
         base_url: baseUrl,
         model_name: modelName,
-        export_dir: exportDir
+        export_dir: exportDir,
+        theme: theme
       })
     });
     const json = await res.json();

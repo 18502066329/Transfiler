@@ -118,6 +118,49 @@ h1, h2, h3, h4 {
 }
 
 /* --- 3. 导航与侧边栏 (Sidebar & Navigation) --- */
+aside#app-sidebar {
+  transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1), min-width 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar-collapsed {
+  width: 4rem !important; /* 64px */
+  min-width: 4rem !important;
+}
+
+.sidebar-collapsed .sidebar-text-collapsible {
+  display: none !important;
+}
+
+.sidebar-collapsed .sidebar-logo-container {
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+  justify-content: center !important;
+}
+
+.sidebar-collapsed .nav-item {
+  justify-content: center !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.sidebar-collapsed .nav-item::before {
+  left: 2px !important;
+}
+
+.sidebar-collapsed .sidebar-status-card {
+  padding: 0.5rem !important;
+  margin-left: 0.5rem !important;
+  margin-right: 0.5rem !important;
+}
+
+.sidebar-collapsed .sidebar-status-full {
+  display: none !important;
+}
+
+.sidebar-collapsed .sidebar-status-compact {
+  display: flex !important;
+}
+
 .nav-item {
   position: relative;
   transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
@@ -143,7 +186,42 @@ h1, h2, h3, h4 {
   background-color: var(--accent-primary);
 }
 
+/* 主题单选卡片 (Theme Select Radio Cards) */
+.theme-select-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border-subtle);
+  background-color: var(--bg-card-subtle);
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.theme-select-card:hover {
+  border-color: var(--border-medium);
+  background-color: var(--bg-card-hover);
+}
+.theme-select-card.active {
+  border-color: var(--accent-primary) !important;
+  background-color: var(--accent-subtle) !important;
+  box-shadow: 0 0 0 1px var(--accent-primary), 0 4px 14px -2px rgba(59, 130, 246, 0.18);
+}
+.theme-select-card.active [id^="theme-check-"] {
+  background-color: var(--accent-primary) !important;
+  border-color: var(--accent-primary) !important;
+}
+.theme-select-card.active [id^="theme-check-"] i {
+  display: inline-block !important;
+}
+
 /* --- 4. 容器与卡片规范 (Card Architecture) --- */
+.app-card-subtle {
+  background-color: var(--bg-card-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+}
+
 .app-card {
   background-color: var(--bg-card);
   border: 1px solid var(--border-subtle);

@@ -209,3 +209,40 @@ def test_complex_job_description_docx_workflow():
     assert exp_data["status"] == "success"
     assert os.path.exists(exp_data["export_path"])
 
+def test_v125_settings_and_export_dir_api():
+    # 1. 测试获取系统默认导出目录
+    def_res = client.get("/api/settings/default-export-dir")
+    assert def_res.status_code == 200
+    def_data = def_res.json()
+    assert def_data["status"] == "success"
+    assert "default_export_dir" in def_data
+    assert os.path.isabs(def_data["default_export_dir"])
+
+    # 2. 测试保存自定义导出目录与主题
+    custom_dir = str(Path("exported_docs").resolve())
+    save_res = client.post("/api/settings", json={
+        "provider": "gemini",
+        "api_key": "AIzaSyTestKey125",
+        "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
+        "model_name": "gemini-3.8-flash",
+        "export_dir": custom_dir,
+        "theme": "light"
+    })
+    assert save_res.status_code == 200
+    assert save_res.json()["status"] == "success"
+
+    # 读取验证
+    get_res = client.get("/api/settings")
+    assert get_res.status_code == 200
+    st = get_res.json()["data"]
+    assert st["export_dir"] == custom_dir
+    assert st["theme"] == "light"
+
+    # 3. 测试打开导出目录接口
+    open_res = client.post("/api/settings/open-export-dir", json={
+        "export_dir": custom_dir
+    })
+    assert open_res.status_code == 200
+    assert open_res.json()["status"] == "success"
+
+
